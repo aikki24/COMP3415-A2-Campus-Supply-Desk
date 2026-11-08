@@ -14,6 +14,7 @@ def item(product_id, quantity):
 
 class ExpressTests(unittest.TestCase):
     def setUp(self):
+        # Give every test a fresh save file so tests do not change real orders.
         directory = TemporaryDirectory()
         self.addCleanup(directory.cleanup)
         self.path = Path(directory.name) / "state.json"
@@ -30,6 +31,7 @@ class ExpressTests(unittest.TestCase):
                     if p["product_id"] == product_id)
 
     def test_express_examples(self):
+        # Use the three examples from the change request as expected totals.
         cases = [
             ("regular", "notebook", 2, 1000, 0, 2200),
             ("student", "hoodie", 2, 8000, 800, 8400),
@@ -46,6 +48,7 @@ class ExpressTests(unittest.TestCase):
         self.assertFalse(self.path.exists())
 
     def test_student_eligibility_matches_existing_pickup(self):
+        # Compare the student discount with pickup on both sides of the threshold.
         for quantity in (9, 10, 11):
             with self.subTest(quantity=quantity):
                 items = [item("notebook", quantity)]
@@ -55,6 +58,7 @@ class ExpressTests(unittest.TestCase):
                 self.assertEqual(express["total_cents"], pickup["total_cents"] + 1200)
 
     def test_standard_threshold_uses_discounted_subtotal(self):
+        # Check below and at the free standard delivery threshold, including a discount.
         cases = [
             ("regular", [item("notebook", 19)], 600),
             ("regular", [item("notebook", 20)], 0),
@@ -71,6 +75,7 @@ class ExpressTests(unittest.TestCase):
                 )
 
     def test_order_snapshot_stock_history_and_numbering(self):
+        # Follow an express order from quote to placement, reopening, and cancellation.
         items = [item("hoodie", 2), item("notebook", 1)]
         quote = self.service.quote("student", items, "express")
         order = self.service.place_order("student", items, "express")
@@ -91,6 +96,7 @@ class ExpressTests(unittest.TestCase):
         self.assertEqual(OrderService(self.path).list_orders(), [cancelled, second])
 
     def test_invalid_fulfillment_and_stock_preserve_state(self):
+        # Compare the save file before and after rejected requests.
         self.service.place_order("regular", [item("hoodie", 1)])
         before = self.path.read_bytes()
         for operation in (self.service.quote, self.service.place_order):
@@ -121,6 +127,7 @@ class ExpressTests(unittest.TestCase):
         self.assertEqual(len(self.service.list_orders()), 1)
 
     def test_menu_quote_and_confirmed_order(self):
+        # Feed answers to the real menu and check the saved express order.
         result = self.command(inputs=(
             "2\n\nnotebook\n2\n\nexpress\n"
             "3\n\nnotebook\n2\n\nexpress\ny\n0\n"
