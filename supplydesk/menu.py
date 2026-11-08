@@ -38,16 +38,19 @@ def read_request(service):
             print("Please enter a whole number. Re-enter this item.")
             continue
         items.append({"product_id": product_id, "quantity": quantity})
+    # Pressing Enter still chooses pickup. Express is now available here too.
     fulfillment = input("Fulfillment [pickup/delivery/express] (Enter = pickup): ").strip() or "pickup"
     return customer, items, fulfillment
 
 
 def quote_request(service):
+    # Show the price without creating an order or reserving stock.
     show_order(service.quote(*read_request(service)))
     print("Quote only: no stock reserved and no order created.")
 
 
 def place_request(service):
+    # Preview the price first, then save only if the user confirms.
     request = read_request(service)
     show_order(service.quote(*request))
     if input("Place this order? [y/N]: ").strip().lower() == "y":
@@ -57,6 +60,7 @@ def place_request(service):
 
 
 def show_history(service):
+    # Show saved orders in the same order they were placed.
     orders = service.list_orders()
     if not orders:
         print("No orders yet.")
@@ -65,6 +69,7 @@ def show_history(service):
 
 
 def cancel_request(service):
+    # Ask before cancelling because cancellation changes the saved order and stock.
     order_id = input("Order ID to cancel: ").strip()
     if input("Cancel this order? [y/N]: ").strip().lower() == "y":
         show_order(service.cancel_order(order_id))
@@ -73,6 +78,7 @@ def cancel_request(service):
 
 
 def run_menu(service):
+    # Each menu number points to the action it should run.
     actions = {
         "1": lambda: show_catalog(service.catalog()),
         "2": lambda: quote_request(service),
