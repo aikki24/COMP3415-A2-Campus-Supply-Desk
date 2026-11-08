@@ -3,6 +3,7 @@
 from supplydesk.storage import JsonStore
 
 
+# The service and command-line parser use the same delivery choices.
 FULFILLMENT_OPTIONS = ("pickup", "delivery", "express")
 EXPRESS_DELIVERY_CENTS = 1200
 
@@ -19,6 +20,7 @@ class OrderService:
         return self._price_request(state, customer_type, items, fulfillment)
 
     def _price_request(self, state, customer_type, items, fulfillment):
+        # Quotes and orders share these checks and calculations so their totals agree.
         if customer_type not in ("regular", "student"):
             raise ValueError("Customer type must be regular or student.")
         if fulfillment not in FULFILLMENT_OPTIONS:
@@ -27,10 +29,12 @@ class OrderService:
             raise ValueError("An order must contain at least one item.")
         lines = self._build_lines(state["catalog"], items)
         subtotal = sum(line["line_total_cents"] for line in lines)
+        # Calculate the student discount on merchandise before adding delivery.
         discount = 0
         if customer_type == "student" and subtotal > 5000:
             discount = (subtotal * 10 + 50) // 100
         delivery = 0
+        # Express always costs $12. Only standard delivery can qualify for a waiver.
         if fulfillment == "express":
             delivery = EXPRESS_DELIVERY_CENTS
         elif fulfillment == "delivery" and subtotal - discount < 10000:
@@ -46,6 +50,7 @@ class OrderService:
         }
 
     def _build_lines(self, catalog, items):
+        # Check each requested item and record the name, price, and quantity for the order.
         lines = []
         for item in items:
             if not isinstance(item, dict):
@@ -74,6 +79,7 @@ class OrderService:
 
     def place_order(self, customer_type, items, fulfillment="pickup"):
         state = self.store.load()
+        # Validate and price against the same stock data this order will update.
         priced = self._price_request(state, customer_type, items, fulfillment)
         order = {
             "order_id": "ORD-" + str(state["next_order_number"]).zfill(4),
