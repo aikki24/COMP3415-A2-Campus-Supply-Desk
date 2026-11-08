@@ -83,7 +83,7 @@ Then:
 5. Press Enter without typing another product ID to finish adding items.
 6. Press Enter at the fulfillment prompt to use `pickup`.
 
-With sufficient stock available, the quote should show a **$10.00 total**.
+With sufficient stock available, the pickup quote should show a **$10.00 total**. Choose `delivery` for standard delivery or `express` for express delivery. Express always adds **$12.00 CAD**, even on orders that qualify for free standard delivery. Student discounts apply to merchandise.
 
 No order has been placed. To purchase items, choose **3 — Place an order** from the menu and follow the prompts.
 
@@ -95,15 +95,7 @@ From the folder containing `README.md`, `supplydesk`, and `tests`, run:
 python -m unittest discover -s tests -v
 ```
 
-The supplied tests should finish with:
-
-```text
-Ran 4 tests
-
-OK
-```
-
-These four tests are a starting point. **Passing them does not mean every required behavior is correct.** You will add meaningful tests as part of the assignment.
+The suite covers the starter behavior and CR-01 express delivery. A successful run ends with `OK`.
 
 The supplied tests use temporary files and do not change your saved orders or stock.
 
@@ -152,7 +144,8 @@ Avoid running two instances that change the same save file simultaneously.
 - **`supplydesk/service.py`** — Quotes, orders, inventory operations, and cancellation.
 - **`supplydesk/storage.py`** — Loading and saving local JSON data.
 - **`supplydesk/catalog.json`** — Initial products, prices, and stock for a new session.
-- **`tests/test_smoke.py`** — Four starter tests.
+- **`tests/test_smoke.py`** — Baseline and safety-net tests.
+- **`tests/test_express.py`** — CR-01 service, CLI, and menu tests.
 
 The menu and individual commands use the same service and saved data. When a later requirement affects available choices or displayed information, review both interfaces.
 
@@ -172,6 +165,7 @@ You can perform operations directly instead of using the menu. These commands ar
 python -m supplydesk catalog
 python -m supplydesk quote --customer regular --item notebook:2
 python -m supplydesk quote --customer student --fulfillment delivery --item hoodie:2
+python -m supplydesk quote --customer student --fulfillment express --item hoodie:2
 ```
 
 Use repeated `--item` options for multiple items:

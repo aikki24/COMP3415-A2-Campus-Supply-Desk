@@ -3,6 +3,10 @@
 from supplydesk.storage import JsonStore
 
 
+FULFILLMENT_OPTIONS = ("pickup", "delivery", "express")
+EXPRESS_DELIVERY_CENTS = 1200
+
+
 class OrderService:
     def __init__(self, state_path=".supplydesk/state.json"):
         self.store = JsonStore(state_path)
@@ -17,8 +21,8 @@ class OrderService:
     def _price_request(self, state, customer_type, items, fulfillment):
         if customer_type not in ("regular", "student"):
             raise ValueError("Customer type must be regular or student.")
-        if fulfillment not in ("pickup", "delivery"):
-            raise ValueError("Fulfillment must be pickup or delivery.")
+        if fulfillment not in FULFILLMENT_OPTIONS:
+            raise ValueError("Fulfillment must be pickup, delivery, or express.")
         if not isinstance(items, list) or not items:
             raise ValueError("An order must contain at least one item.")
         lines = self._build_lines(state["catalog"], items)
@@ -27,7 +31,9 @@ class OrderService:
         if customer_type == "student" and subtotal > 5000:
             discount = (subtotal * 10 + 50) // 100
         delivery = 0
-        if fulfillment == "delivery" and subtotal - discount < 10000:
+        if fulfillment == "express":
+            delivery = EXPRESS_DELIVERY_CENTS
+        elif fulfillment == "delivery" and subtotal - discount < 10000:
             delivery = 600
         return {
             "customer_type": customer_type,
