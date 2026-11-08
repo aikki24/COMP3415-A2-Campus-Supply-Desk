@@ -21,32 +21,8 @@ class OrderService:
             raise ValueError("Fulfillment must be pickup or delivery.")
         if not isinstance(items, list) or not items:
             raise ValueError("An order must contain at least one item.")
-        lines = []
-        subtotal = 0
-        for item in items:
-            if not isinstance(item, dict):
-                raise ValueError("Each item must contain a product_id and quantity.")
-            product = None
-            for candidate in state["catalog"]:
-                if candidate["product_id"] == item.get("product_id"):
-                    product = candidate
-                    break
-            if product is None:
-                raise ValueError("Unknown product.")
-            quantity = item.get("quantity")
-            if type(quantity) is not int or quantity < 1 or quantity > 99:
-                raise ValueError("Quantity must be an integer from 1 to 99.")
-            if quantity > product["stock"]:
-                raise ValueError("Not enough stock for " + product["product_id"] + ".")
-            line_total = product["unit_price_cents"] * quantity
-            subtotal += line_total
-            lines.append({
-                "product_id": product["product_id"],
-                "name": product["name"],
-                "unit_price_cents": product["unit_price_cents"],
-                "quantity": quantity,
-                "line_total_cents": line_total,
-            })
+        lines = self._build_lines(state["catalog"], items)
+        subtotal = sum(line["line_total_cents"] for line in lines)
         discount = 0
         if customer_type == "student" and subtotal > 5000:
             discount = (subtotal * 10 + 50) // 100
@@ -62,6 +38,33 @@ class OrderService:
             "delivery_cents": delivery,
             "total_cents": subtotal - discount + delivery,
         }
+
+    def _build_lines(self, catalog, items):
+        lines = []
+        for item in items:
+            if not isinstance(item, dict):
+                raise ValueError("Each item must contain a product_id and quantity.")
+            product = None
+            for candidate in catalog:
+                if candidate["product_id"] == item.get("product_id"):
+                    product = candidate
+                    break
+            if product is None:
+                raise ValueError("Unknown product.")
+            quantity = item.get("quantity")
+            if type(quantity) is not int or quantity < 1 or quantity > 99:
+                raise ValueError("Quantity must be an integer from 1 to 99.")
+            if quantity > product["stock"]:
+                raise ValueError("Not enough stock for " + product["product_id"] + ".")
+            line_total = product["unit_price_cents"] * quantity
+            lines.append({
+                "product_id": product["product_id"],
+                "name": product["name"],
+                "unit_price_cents": product["unit_price_cents"],
+                "quantity": quantity,
+                "line_total_cents": line_total,
+            })
+        return lines
 
     def place_order(self, customer_type, items, fulfillment="pickup"):
         state = self.store.load()
