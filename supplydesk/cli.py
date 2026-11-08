@@ -30,6 +30,7 @@ def build_parser():
     for name in ("quote", "place"):
         command = commands.add_parser(name)
         command.add_argument("--customer", choices=("regular", "student"), default="regular")
+        # Use the same choices as the service, including express. Pickup is the default.
         command.add_argument("--fulfillment", choices=FULFILLMENT_OPTIONS, default="pickup",
                              help="pickup (default), standard delivery, or $12 CAD express")
         command.add_argument("--item", type=parse_item, action="append", required=True)
