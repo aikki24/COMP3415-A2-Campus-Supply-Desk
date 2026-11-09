@@ -5,7 +5,7 @@ import json
 from pathlib import Path
 import sys
 
-from supplydesk.service import FULFILLMENT_OPTIONS, OrderService
+from supplydesk.service import FULFILLMENT_OPTIONS, OrderService  # Reuse the service choices in the command line.
 
 
 def parse_item(value):
@@ -31,7 +31,7 @@ def build_parser():
         command = commands.add_parser(name)
         command.add_argument("--customer", choices=("regular", "student"), default="regular")
         # Use the same choices as the service, including express. Pickup is the default.
-        command.add_argument("--fulfillment", choices=FULFILLMENT_OPTIONS, default="pickup",
+        command.add_argument("--fulfillment", choices=FULFILLMENT_OPTIONS, default="pickup",  # Use the requested delivery option or the pickup default.
                              help="pickup (default), standard delivery, or $12 CAD express")
         command.add_argument("--item", type=parse_item, action="append", required=True)
     commands.add_parser("orders", help="list orders in placement order")
